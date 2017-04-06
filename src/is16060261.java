@@ -62,12 +62,18 @@ public class is16060261 {
         for (int j = 0; j < G; j++) {
             QuickSort(orderings, fitnessCost, 0, fitnessCost.size() - 1);
             performSelection(orderings,fitnessCost);
-            orderings = chooseTechnique(orderings, Re, Mu, Cr, D, studentScheduleMark);
             System.out.println();
-            printOrdering(j, orderings.get(0), D);
-            System.out.println(" cost: " + fitnessCost.get(0));
+            //printOrdering(j, orderings.get(0), D);
+           // System.out.println(" cost: " + fitnessCost.get(0));
+            for(int k = 0; k < orderings.size(); k++)
+            {
+                printOrdering(k,orderings.get(k),D);
+                System.out.println(" cost: " + fitnessCost.get(k));
+            }
+            fitnessCost.clear();
+            orderings = chooseTechnique(orderings, Re, Mu, Cr, D, studentScheduleMark,fitnessCost);
         }
-        //TODO: caculate the fitnessCost For evert G instead of read from a list!
+
 //
 //        performCrossover(orderings.get(8),orderings.get(9));
 //        printOrdering(8,orderings.get(8),D);
@@ -269,34 +275,39 @@ public class is16060261 {
         return initialOrderings;
     }
 
-    private static ArrayList<ArrayList<Integer>> chooseTechnique(ArrayList<ArrayList<Integer>> orderings, int Re, int Mu, int Cr, int examDays, ArrayList<Boolean[]> studentScheduleMark) {
+    private static ArrayList<ArrayList<Integer>> chooseTechnique(ArrayList<ArrayList<Integer>> orderings, int Re, int Mu, int Cr, int examDays, ArrayList<Boolean[]> studentScheduleMark,ArrayList<Integer> fitnessCostRecord) {
         ArrayList<ArrayList<Integer>> orderingAfterGA = new ArrayList<ArrayList<Integer>>();
         while (orderings.size() > 0) {
             typeOfTechnique type = getTypeOfTechnique(Re, Mu, Cr);
+            int cost;
             switch (type) {
                 case REPRODUCTION:
                     int randForReprodction = (int) (Math.random() * orderings.size());
                     ArrayList<Integer> newOrdering1 = orderings.get(randForReprodction);
                     orderingAfterGA.add(newOrdering1);
-                    fitnessFunction(studentScheduleMark,newOrdering1);
+                    cost = fitnessFunction(studentScheduleMark,newOrdering1);
+                    fitnessCostRecord.add(cost);
                     orderings.remove(randForReprodction);
                     break;
                 case MUTATION:
                     int randForMutation = (int) (Math.random() * orderings.size());
                     ArrayList<Integer> newOrdering2 = performMutation(orderings.get(randForMutation), examDays);
                     orderingAfterGA.add(newOrdering2);
-                    fitnessFunction(studentScheduleMark,newOrdering2);
+                    cost = fitnessFunction(studentScheduleMark,newOrdering2);
+                    fitnessCostRecord.add(cost);
                     orderings.remove(randForMutation);
                     break;
                 case CROSSOVER:
                     if (orderings.size() >= 2) {
                         int[] randForCrossover = getRandomIndexOfOrderings(orderings.size());
                         ArrayList<ArrayList<Integer>> AfterCrossover = performCrossover(orderings.get(randForCrossover[0]),orderings.get(randForCrossover[1]));
+
                         orderingAfterGA.add(AfterCrossover.get(0));
-                        fitnessFunction(studentScheduleMark,AfterCrossover.get(0));
+                        cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(0));
+                        fitnessCostRecord.add(cost);
                         orderingAfterGA.add(AfterCrossover.get(1));
-                        fitnessFunction(studentScheduleMark,AfterCrossover.get(1));
-                        ArrayList<ArrayList<Integer>> temp = new ArrayList<>();
+                        cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(1));
+                        fitnessCostRecord.add(cost);
                         if(randForCrossover[1]>randForCrossover[0])
                         {
                             orderings.remove(randForCrossover[1]);
