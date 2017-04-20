@@ -13,14 +13,14 @@ public class is16060261 {
     public static void main(String[] args) throws FileNotFoundException {
         int G, P, S, M, C, D, Cr, Mu, Re;
         Scanner in = new Scanner(System.in);
-        G = getNumberFromUser("number of generations:", 0, in);
-        P = getNumberFromUser("Population size:", 0, in);
-        S = getNumberFromUser("number of students:", 0, in);
-        M = getNumberFromUser("total number of modules:", 1, in);
-        C = getNumberFromUserAndCheck("the number of modules in a course:", in, M);
-        int[] percentage = getPercentageAndCheck(in);
-        Re = percentage[0];
-        Mu = percentage[1];
+        G = 150;//getNumberFromUser("number of generations:", 0, in);
+        P = 30;//getNumberFromUser("Population size:", 0, in);
+        S = 80;//getNumberFromUser("number of students:", 0, in);
+        M = 36;//getNumberFromUser("total number of modules:", 1, in);
+        C = 5;//getNumberFromUserAndCheck("the number of modules in a course:", in, M);
+        //int[] percentage = getPercentageAndCheck(in);
+        Re = 80;//percentage[0];
+        Mu = 10;//percentage[1];
         Cr = 100 - (Re + Mu);
         D = (M / 2);
 
@@ -34,14 +34,13 @@ public class is16060261 {
             Arrays.fill(mark, false);
 
             ArrayList<Integer> courseNum = newStudentModuleInfo(C, M, mark, studentNum);
-            System.out.print("\n");
+            System.out.println("\n");
 
             studentSchedule.add(courseNum);
             studentScheduleMark.add(mark);
         }
 
         ArrayList<ArrayList<Integer>> orderings = new ArrayList<ArrayList<Integer>>();
-        ArrayList<Integer> fitnessCost = new ArrayList<Integer>();
         int i = 0;
         while (i < P) {
             ArrayList<Integer> newOrdering = createNewOrdering(M);
@@ -49,22 +48,21 @@ public class is16060261 {
             boolean flag = checkRepeatOrder(newOrdering, orderings);
 
             if (!flag) {
-                orderings.add(newOrdering);
                 int cost = fitnessFunction(studentScheduleMark, newOrdering);
-                fitnessCost.add(cost);
+                newOrdering.add(cost);
+                orderings.add(newOrdering);
+
+                i++;
             }
         }
 
-
         for (int j = 0; j < G; j++) {
-            QuickSort(orderings, fitnessCost, 0, fitnessCost.size() - 1);
-            performSelection(orderings,fitnessCost);
-            System.out.println();
+            QuickSort(orderings, 0, orderings.size() - 1,M);
+            performSelection(orderings);
             printOrdering(j,orderings.get(0),D);
-            System.out.println(" cost: " + fitnessCost.get(0));
+            System.out.println(" cost: " + orderings.get(0).get(M));
             System.out.print("\n\n");
-            fitnessCost.clear();
-            orderings = chooseTechnique(orderings, Re, Mu, Cr, D, studentScheduleMark,fitnessCost);
+            orderings = chooseTechnique(orderings, Re, Mu, Cr, D, studentScheduleMark);
         }
     }
 
@@ -201,7 +199,7 @@ public class is16060261 {
 
     private static void printOrdering(int OrderNum, ArrayList<Integer> ordering, int examDays) {
         System.out.print("Ord " + (OrderNum + 1) + ":");
-        for (int k = 0; k < ordering.size(); k++) {
+        for (int k = 0; k < ordering.size()-1; k++) {
             System.out.print("\t" + " m" + ordering.get(k));
             if (k == (examDays - 1))
                 System.out.println();
@@ -223,38 +221,32 @@ public class is16060261 {
         return cost;
     }
 
-    private static void QuickSort(ArrayList<ArrayList<Integer>> orderings, ArrayList<Integer> fitnessCost, int low, int high) {
+    private static void QuickSort(ArrayList<ArrayList<Integer>> orderings,  int low, int high,int M) {
         if (low < high) {
-            int key1 = fitnessCost.get(low);
+            int key1 = orderings.get(low).get(M);
             ArrayList<Integer> key2 = orderings.get(low);
             int i = low, j;
             for (j = low + 1; j <= high; j++) {
-                if (fitnessCost.get(j) < key1) {
-                    Collections.swap(fitnessCost, i + 1, j);
+                if (orderings.get(j).get(M) < key1) {
                     Collections.swap(orderings, i + 1, j);
                     i++;
                 }
-
             }
-            fitnessCost.set(low, fitnessCost.get(i));
             orderings.set(low, orderings.get(i));
-            fitnessCost.set(i, key1);
             orderings.set(i, key2);
-            QuickSort(orderings, fitnessCost, low, i - 1);
-            QuickSort(orderings, fitnessCost, i + 1, high);
+            QuickSort(orderings, low, i - 1,M);
+            QuickSort(orderings, i + 1, high,M);
 
         }
     }
 
-    private static ArrayList<ArrayList<Integer>> performSelection(ArrayList<ArrayList<Integer>> initialOrderings,ArrayList<Integer> fitnessCost) {
+    private static ArrayList<ArrayList<Integer>> performSelection(ArrayList<ArrayList<Integer>> initialOrderings) {
         if (initialOrderings.size() > 3) {
             int mod = initialOrderings.size() % 3;
             int divisor = (int) Math.floor((initialOrderings.size() + mod) / 3);
             int startpoint = initialOrderings.size() - divisor;
             for (int i = 0; i < divisor; i++) {
                 initialOrderings.set(startpoint, copyArrayList(initialOrderings.get(i)));
-                int cost = fitnessCost.get(i);
-                fitnessCost.set(startpoint, cost);
                 startpoint++;
             }
         }
@@ -272,7 +264,7 @@ public class is16060261 {
         return  copy;
     }
 
-    private static ArrayList<ArrayList<Integer>> chooseTechnique(ArrayList<ArrayList<Integer>> orderings, int Re, int Mu, int Cr, int examDays, ArrayList<Boolean[]> studentScheduleMark,ArrayList<Integer> fitnessCostRecord) {
+    private static ArrayList<ArrayList<Integer>> chooseTechnique(ArrayList<ArrayList<Integer>> orderings, int Re, int Mu, int Cr, int examDays, ArrayList<Boolean[]> studentScheduleMark) {
         ArrayList<ArrayList<Integer>> orderingAfterGA = new ArrayList<ArrayList<Integer>>();
         int i=0;
         while (orderings.size() > 0) {
@@ -281,34 +273,25 @@ public class is16060261 {
             switch (type) {
                 case REPRODUCTION:
                     int randForReprodction = (int) (Math.random() * orderings.size());
-                   // System.out.println("Reproduction Ordering:"+randForReprodction);
                     ArrayList<Integer> newOrdering1 = orderings.get(randForReprodction);
-                   // printOrdering(i,newOrdering1,examDays);
-                    orderingAfterGA.add(newOrdering1);
                     cost = fitnessFunction(studentScheduleMark,newOrdering1);
-                    fitnessCostRecord.add(cost);
-                    //System.out.println(cost);
+                    newOrdering1.set(examDays*2,cost);
+                    orderingAfterGA.add(newOrdering1);
                     orderings.remove(randForReprodction);
-                   // System.out.println();
                     i++;
                     break;
                 case MUTATION:
                     int randForMutation = (int) (Math.random() * orderings.size());
-                    //System.out.println("MUTATION Ordering:"+randForMutation );
                     ArrayList<Integer> newOrdering2 = performMutation(copyArrayList(orderings.get(randForMutation)), examDays);
-                    orderingAfterGA.add(newOrdering2);
-                    //printOrdering(i,newOrdering2,examDays);
                     cost = fitnessFunction(studentScheduleMark,newOrdering2);
-                    fitnessCostRecord.add(cost);
-                    //System.out.println(cost);
+                    newOrdering2.set(examDays*2,cost);
+                    orderingAfterGA.add(newOrdering2);
                     orderings.remove(randForMutation);
                     i++;
-                   // System.out.println();
                     break;
                 case CROSSOVER:
                     if (orderings.size() >= 2) {
                         int[] randForCrossover = getRandomIndexOfOrderings(orderings.size());
-                        //System.out.println("CROSSOVER Ordering:"+randForCrossover[0]+" and "+randForCrossover[1]);
                         ArrayList<ArrayList<Integer>> AfterCrossover = performCrossover(orderings.get(randForCrossover[0]),orderings.get(randForCrossover[1]));
                         if(randForCrossover[1]>randForCrossover[0])
                         {
@@ -320,27 +303,17 @@ public class is16060261 {
                             orderings.remove(randForCrossover[0]);
                             orderings.remove(randForCrossover[1]);
                         }
-                        orderingAfterGA.add(AfterCrossover.get(0));
+
                         cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(0));
-                        fitnessCostRecord.add(cost);
-                        //printOrdering(i,AfterCrossover.get(0),examDays);
-                        //System.out.println(cost);
+                        AfterCrossover.get(0).set(examDays*2,cost);
+                        orderingAfterGA.add(AfterCrossover.get(0));
                         i++;
-                        orderingAfterGA.add(AfterCrossover.get(1));
                         cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(1));
-                        fitnessCostRecord.add(cost);
-                        //printOrdering(i,AfterCrossover.get(1),examDays);
-                        //System.out.println(cost);
+                        AfterCrossover.get(1).set(examDays*2,cost);
+                        orderingAfterGA.add(AfterCrossover.get(1));
                         i++;
 
                     }
-//                    for(int j = 0; j<orderings.size();j++)
-//                    {
-//                        printOrdering(j,orderings.get(j),examDays);
-//                        System.out.println();
-//                    }
-
-//                    System.out.println();
                     break;
             }
         }
@@ -377,7 +350,6 @@ public class is16060261 {
 
     private static ArrayList<Integer> performMutation(ArrayList<Integer> ordering, int examDays) {
         int[] rand = getRandomIndexOfOrderings(examDays);
-        //System.out.println(rand[0] + " to " + examDays + rand[1]);
         Collections.swap(ordering, rand[0], examDays + rand[1]);
         return ordering;
     }
@@ -386,11 +358,10 @@ public class is16060261 {
         ArrayList<ArrayList<Integer>> AfterCrossover = new ArrayList<>();
         ArrayList<Integer> swapRecordForO1 = new ArrayList<>();
         ArrayList<Integer> swapRecordForO2 = new ArrayList<>();
-        int NumberOfModule = ordering1.size();
+        int NumberOfModule = ordering1.size()-1;
         int examDay = NumberOfModule/2;
         boolean flag = false;
         int cp = (int) (Math.random() * ((NumberOfModule - 4) + 1)) + 2;
-        //System.out.println(cp+"!!!!!!!!!!!");
 
         if(cp <= examDay)
             flag = true;
@@ -436,9 +407,6 @@ public class is16060261 {
             if(!swapRecordForO1.contains(swapRecordForO2.get(i)))
                 duplicateIndexForO1.add(i);
         }
-////
-//        System.out.println(duplicateIndexForO1);
-//        System.out.println(duplicateIndexForO2);
         repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering1, swapRecordForO1, flag,1 );
         repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering2, swapRecordForO2, flag,2 );
     }
@@ -470,16 +438,12 @@ public class is16060261 {
 
             if(!flag)
             {
-                Index1 = ordering.size() - swapRecord.size() + Index1;
+                Index1 = ordering.size() - swapRecord.size() + Index1-1;
             }
-
-//            System.out.println("orderingofIndx1     "+ordering.get(Index1));
-//            System.out.println("swapRecordForO2     "+swapRecord.get(IndexForSwapRecord));
-//            System.out.println("randNum     "+randNum);
 
             if(randNum==0)
             {
-                for(int i = 0; i < ordering.size(); i++)
+                for(int i = 0; i < ordering.size()-1; i++)
                 {
                     if(ordering.get(i) == ordering.get(Index1))
                     {
@@ -491,7 +455,7 @@ public class is16060261 {
 
             else if(randNum==1)
             {
-                for(int i = ordering.size()-1; i >= 0 ; i--)
+                for(int i = ordering.size()-2; i >= 0 ; i--)
                 {
                     if(ordering.get(i) == ordering.get(Index1))
                     {
