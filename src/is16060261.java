@@ -40,27 +40,23 @@ public class is16060261 {
             studentScheduleMark.add(mark);
         }
 
-        ArrayList<ArrayList<Integer>> orderings = new ArrayList<ArrayList<Integer>>();
+        ArrayList<int[][]> orderings = new ArrayList<>();
         int i = 0;
         while (i < P) {
-            ArrayList<Integer> newOrdering = createNewOrdering(M);
+            int[][] newOrdering = createNewOrdering(studentScheduleMark,M);
 
             boolean flag = checkRepeatOrder(newOrdering, orderings);
 
             if (!flag) {
-                int cost = fitnessFunction(studentScheduleMark, newOrdering);
-                newOrdering.add(cost);
                 orderings.add(newOrdering);
-
                 i++;
             }
         }
-
-        for (int j = 0; j < G; j++) {
-            QuickSort(orderings, 0, orderings.size() - 1,M);
-            performSelection(orderings);
+        for (int j = 0; j <= G; j++) {
+            QuickSort(orderings, 0, orderings.size() - 1,D);
+            performSelection(orderings,D);
             printOrdering(j,orderings.get(0),D);
-            System.out.println(" cost: " + orderings.get(0).get(M));
+            System.out.println(" cost: " + orderings.get(0)[1][D]);
             System.out.print("\n\n");
             orderings = chooseTechnique(orderings, Re, Mu, Cr, D, studentScheduleMark);
         }
@@ -156,7 +152,7 @@ public class is16060261 {
 
     private static ArrayList<Integer> newStudentModuleInfo(int n, int totalNumberOfModule, Boolean[] mark, int studentNum) {
         ArrayList<Integer> StudentModules = new ArrayList<Integer>();
-        System.out.print("Student " + (studentNum + 1) + ":");
+        System.out.print("Student" + (studentNum + 1) + ":");
         while (StudentModules.size() < n) {
             int courseNum = (int) (Math.random() * totalNumberOfModule + 1);
             boolean flag = true;
@@ -167,29 +163,39 @@ public class is16060261 {
 
                 StudentModules.add(courseNum);
                 mark[courseNum - 1] = true;
-                System.out.print(" M" + courseNum + "\t");
+                System.out.print("\t"+"M" + courseNum);
             }
         }
         return StudentModules;
     }
 
-    private static ArrayList<Integer> createNewOrdering(int totalNumberOfModule) {
-        ArrayList<Integer> newOrdering = new ArrayList<Integer>();
-        while (newOrdering.size() < totalNumberOfModule) {
-            int courseNum = (int) (Math.random() * totalNumberOfModule + 1);
-            boolean flag = true;
-            if (newOrdering.contains(courseNum)) {
-                flag = false;
-            }
-            if (flag) {
-                newOrdering.add(courseNum);
+    private static int[][] createNewOrdering(ArrayList<Boolean[]> studentScheduleMark,int totalNumberOfModule) {
+        int[][] newOrdering = new int[2][totalNumberOfModule/2+1];
+        ArrayList<Integer> temp = new ArrayList<>();
+        int cost = 0;
+        for(int i = 0; i < 2; i++)
+        {
+            for(int j = 0; j < totalNumberOfModule/2; j++)
+            {
+                boolean flag = false;
+                while (!flag&&temp.size() <= totalNumberOfModule) {
+                    int courseNum = (int) (Math.random() * totalNumberOfModule + 1);
+                    if (!temp.contains(courseNum)) {
+                        flag = true;
+                        temp.add(courseNum);
+                        newOrdering[i][j] = courseNum;
+                    }
+                }
             }
         }
+        cost = fitnessFunction(studentScheduleMark, newOrdering);
+        newOrdering[0][totalNumberOfModule/2] = 0;
+        newOrdering[1][totalNumberOfModule/2] = cost;
         return newOrdering;
     }
 
 
-    private static boolean checkRepeatOrder(ArrayList<Integer> ordering, ArrayList<ArrayList<Integer>> orderings) {
+    private static boolean checkRepeatOrder(int[][] ordering, ArrayList<int[][]> orderings) {
         if (orderings.contains(ordering)) {
             return true;
         }
@@ -197,22 +203,26 @@ public class is16060261 {
     }
 
 
-    private static void printOrdering(int OrderNum, ArrayList<Integer> ordering, int examDays) {
-        System.out.print("Ord " + (OrderNum + 1) + ":");
-        for (int k = 0; k < ordering.size()-1; k++) {
-            System.out.print("\t" + " m" + ordering.get(k));
-            if (k == (examDays - 1))
-                System.out.println();
+    private static void printOrdering(int OrderNum, int[][] ordering, int examDays) {
+        System.out.print("Gen " + (OrderNum) + ":");
+        for(int i = 0; i < 2; i++)
+        {
+            for (int k = 0; k < examDays; k++) {
+                System.out.print("\t" + "m" + ordering[i][k]);
+
+            }
+            System.out.println();
         }
+
     }
 
 
-    private static int fitnessFunction(ArrayList<Boolean[]> studentScheduleMark, ArrayList<Integer> ordering) {
+    private static int fitnessFunction(ArrayList<Boolean[]> studentScheduleMark, int[][] ordering) {
         int cost = 0;
         for (int i = 0; i < studentScheduleMark.size(); i++) {
             for (int j = 0; j < studentScheduleMark.get(i).length/2; j++) {
-                int n1 = ordering.get(j) - 1;
-                int n2 = ordering.get(studentScheduleMark.get(i).length/2 + j) - 1;
+                int n1 = ordering[0][j] - 1;
+                int n2 = ordering[1][j] - 1;
                 if (studentScheduleMark.get(i)[n1] && studentScheduleMark.get(i)[n2]) {
                     cost++;
                 }
@@ -221,78 +231,94 @@ public class is16060261 {
         return cost;
     }
 
-    private static void QuickSort(ArrayList<ArrayList<Integer>> orderings,  int low, int high,int M) {
+    private static void QuickSort(ArrayList<int[][]> orderings,  int low, int high,int D) {
         if (low < high) {
-            int key1 = orderings.get(low).get(M);
-            ArrayList<Integer> key2 = orderings.get(low);
+            int key1 = orderings.get(low)[1][D];
+            int[][] key2 = orderings.get(low);
             int i = low, j;
             for (j = low + 1; j <= high; j++) {
-                if (orderings.get(j).get(M) < key1) {
+                if (orderings.get(j)[1][D] < key1) {
                     Collections.swap(orderings, i + 1, j);
                     i++;
                 }
             }
             orderings.set(low, orderings.get(i));
             orderings.set(i, key2);
-            QuickSort(orderings, low, i - 1,M);
-            QuickSort(orderings, i + 1, high,M);
+            QuickSort(orderings, low, i - 1,D);
+            QuickSort(orderings, i + 1, high,D);
 
         }
     }
 
-    private static ArrayList<ArrayList<Integer>> performSelection(ArrayList<ArrayList<Integer>> initialOrderings) {
+    private static ArrayList<int[][]> performSelection(ArrayList<int[][]> initialOrderings,int D) {
         if (initialOrderings.size() > 3) {
             int mod = initialOrderings.size() % 3;
             int divisor = (int) Math.floor((initialOrderings.size() + mod) / 3);
             int startpoint = initialOrderings.size() - divisor;
             for (int i = 0; i < divisor; i++) {
-                initialOrderings.set(startpoint, copyArrayList(initialOrderings.get(i)));
+                initialOrderings.set(startpoint, copyArrayList(initialOrderings.get(i),D));
                 startpoint++;
             }
         }
         return initialOrderings;
     }
 
-    private static ArrayList<Integer> copyArrayList(ArrayList<Integer> old)
+    private static int[][] copyArrayList(int[][] old,int D)
     {
-        ArrayList<Integer> copy = new ArrayList<>();
-        for(int i = 0;i < old.size(); i++)
+        int[][] copy = new int[2][D+1];
+        for(int i = 0; i < 2; i++)
         {
-            int temp = old.get(i);
-            copy.add(temp);
+            for(int j = 0;j <= D; j++)
+            {
+                copy[i][j] = old[i][j];
+            }
         }
+
         return  copy;
     }
 
-    private static ArrayList<ArrayList<Integer>> chooseTechnique(ArrayList<ArrayList<Integer>> orderings, int Re, int Mu, int Cr, int examDays, ArrayList<Boolean[]> studentScheduleMark) {
-        ArrayList<ArrayList<Integer>> orderingAfterGA = new ArrayList<ArrayList<Integer>>();
+    private static ArrayList<int[][]> chooseTechnique(ArrayList<int[][]> orderings, int Re, int Mu, int Cr, int examDays, ArrayList<Boolean[]> studentScheduleMark) {
+        ArrayList<int[][]> orderingAfterGA = new ArrayList<>();
         int i=0;
         while (orderings.size() > 0) {
             typeOfTechnique type = getTypeOfTechnique(Re, Mu, Cr);
             int cost;
             switch (type) {
                 case REPRODUCTION:
+
                     int randForReprodction = (int) (Math.random() * orderings.size());
-                    ArrayList<Integer> newOrdering1 = orderings.get(randForReprodction);
+//                     System.out.println("Reproduction Ordering:"+randForReprodction);
+                    int[][] newOrdering1 = orderings.get(randForReprodction);
                     cost = fitnessFunction(studentScheduleMark,newOrdering1);
-                    newOrdering1.set(examDays*2,cost);
+                    newOrdering1[1][examDays] = cost;
                     orderingAfterGA.add(newOrdering1);
+//                    printOrdering(i,newOrdering1,examDays);
+//                    System.out.println(cost);
                     orderings.remove(randForReprodction);
                     i++;
+//                     System.out.println();
                     break;
                 case MUTATION:
+
                     int randForMutation = (int) (Math.random() * orderings.size());
-                    ArrayList<Integer> newOrdering2 = performMutation(copyArrayList(orderings.get(randForMutation)), examDays);
+//                    System.out.println("MUTATION Ordering:"+randForMutation );
+                    int[][] newOrdering2 = performMutation(copyArrayList(orderings.get(randForMutation),examDays), examDays);
                     cost = fitnessFunction(studentScheduleMark,newOrdering2);
-                    newOrdering2.set(examDays*2,cost);
+                    newOrdering2[1][examDays] = cost;
                     orderingAfterGA.add(newOrdering2);
+//                    printOrdering(i,newOrdering2,examDays);
+//                    System.out.println(cost);
+//                    System.out.println();
                     orderings.remove(randForMutation);
                     i++;
                     break;
                 case CROSSOVER:
                     if (orderings.size() >= 2) {
                         int[] randForCrossover = getRandomIndexOfOrderings(orderings.size());
-                        ArrayList<ArrayList<Integer>> AfterCrossover = performCrossover(orderings.get(randForCrossover[0]),orderings.get(randForCrossover[1]));
+//                        printOrdering(i,orderings.get(randForCrossover[0]),examDays);
+//                        printOrdering(i,orderings.get(randForCrossover[1]),examDays);
+//                        System.out.println("CROSSOVER Ordering:"+randForCrossover[0]+" and "+randForCrossover[1]);
+                        ArrayList<int[][]> AfterCrossover = performCrossover(orderings.get(randForCrossover[0]),orderings.get(randForCrossover[1]), examDays);
                         if(randForCrossover[1]>randForCrossover[0])
                         {
                             orderings.remove(randForCrossover[1]);
@@ -305,14 +331,17 @@ public class is16060261 {
                         }
 
                         cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(0));
-                        AfterCrossover.get(0).set(examDays*2,cost);
+                        AfterCrossover.get(0)[1][examDays] = cost;
                         orderingAfterGA.add(AfterCrossover.get(0));
+//                        printOrdering(i,AfterCrossover.get(0),examDays);
+//                                                System.out.println(cost);
                         i++;
                         cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(1));
-                        AfterCrossover.get(1).set(examDays*2,cost);
+                        AfterCrossover.get(1)[1][examDays] = cost;
                         orderingAfterGA.add(AfterCrossover.get(1));
+//                        printOrdering(i,AfterCrossover.get(1),examDays);
+//                                               System.out.println(cost);
                         i++;
-
                     }
                     break;
             }
@@ -348,51 +377,54 @@ public class is16060261 {
         return type;
     }
 
-    private static ArrayList<Integer> performMutation(ArrayList<Integer> ordering, int examDays) {
+    private static int[][] performMutation(int[][] ordering, int examDays) {
         int[] rand = getRandomIndexOfOrderings(examDays);
-        Collections.swap(ordering, rand[0], examDays + rand[1]);
+//        System.out.println(rand[0] + " to " + examDays + rand[1]);
+        int temp = ordering[0][rand[0]];
+        ordering[0][rand[0]] = ordering[1][rand[1]];
+        ordering[1][rand[1]] = temp;
         return ordering;
     }
 
-    private static ArrayList<ArrayList<Integer>> performCrossover(ArrayList<Integer> ordering1, ArrayList<Integer> ordering2) {
-        ArrayList<ArrayList<Integer>> AfterCrossover = new ArrayList<>();
+    private static ArrayList<int[][]> performCrossover(int[][] ordering1, int[][] ordering2,int D) {
+        ArrayList<int[][]> AfterCrossover = new ArrayList<>();
         ArrayList<Integer> swapRecordForO1 = new ArrayList<>();
         ArrayList<Integer> swapRecordForO2 = new ArrayList<>();
-        int NumberOfModule = ordering1.size()-1;
-        int examDay = NumberOfModule/2;
+        int NumberOfModule = D*2;
         boolean flag = false;
         int cp = (int) (Math.random() * ((NumberOfModule - 4) + 1)) + 2;
-
-        if(cp <= examDay)
+//        System.out.println(cp+"!!!!!!!!!!!");
+        if(cp <= D)
             flag = true;
 
         if(flag)
         {
             for(int i = 0; i < cp; i++)
             {
-                swapRecordForO1.add(ordering1.get(i));
-                swapRecordForO2.add(ordering2.get(i));
-                swapItem(ordering1,ordering2,i);
+                swapRecordForO1.add(ordering1[0][i]);
+                swapRecordForO2.add(ordering2[0][i]);
+                swapItem(ordering1,ordering2,i,D);
             }
         }
         else
         {
             for(int i = cp; i < NumberOfModule; i++)
             {
-                swapRecordForO1.add(ordering1.get(i));
-                swapRecordForO2.add(ordering2.get(i));
-                swapItem(ordering1,ordering2,i);
+                swapRecordForO1.add(ordering1[1][i-D]);
+                swapRecordForO2.add(ordering2[1][i-D]);
+                swapItem(ordering1,ordering2,i,D);
             }
         }
-
-        repairDuplication(swapRecordForO1,swapRecordForO2,ordering1,ordering2,flag);
+//        System.out.println(swapRecordForO1);
+//        System.out.println(swapRecordForO2);
+        repairDuplication(swapRecordForO1,swapRecordForO2,ordering1,ordering2,flag,D);
 
         AfterCrossover.add(ordering1);
         AfterCrossover.add(ordering2);
         return AfterCrossover;
     }
 
-    private static void repairDuplication(ArrayList<Integer> swapRecordForO1,ArrayList<Integer> swapRecordForO2,ArrayList<Integer> ordering1,ArrayList<Integer> ordering2,boolean flag)
+    private static void repairDuplication(ArrayList<Integer> swapRecordForO1,ArrayList<Integer> swapRecordForO2,int[][] ordering1,int[][] ordering2,boolean flag,int D)
     {
         ArrayList<Integer> duplicateIndexForO1 = new ArrayList<>();
         ArrayList<Integer> duplicateIndexForO2 = new ArrayList<>();
@@ -407,16 +439,19 @@ public class is16060261 {
             if(!swapRecordForO1.contains(swapRecordForO2.get(i)))
                 duplicateIndexForO1.add(i);
         }
-        repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering1, swapRecordForO1, flag,1 );
-        repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering2, swapRecordForO2, flag,2 );
+//        System.out.println(duplicateIndexForO1);
+//        System.out.println(duplicateIndexForO2);
+        repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering1, swapRecordForO1, flag,1,D );
+        repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering2, swapRecordForO2, flag,2,D );
     }
 
-    private static void repairDuplicationForOneOrdering(ArrayList<Integer> duplicateIndexForO1, ArrayList<Integer> duplicateIndexForO2, ArrayList<Integer> ordering,ArrayList<Integer> swapRecord, boolean flag,int type )
+    private static void repairDuplicationForOneOrdering(ArrayList<Integer> duplicateIndexForO1, ArrayList<Integer> duplicateIndexForO2, int[][] ordering,ArrayList<Integer> swapRecord, boolean flag,int type,int D )
     {
         ArrayList<Integer> tempDuplicateIndexForO1 = new ArrayList<>();
         tempDuplicateIndexForO1.addAll(duplicateIndexForO1);
         ArrayList<Integer> tempDuplicateIndexForO2 = new ArrayList<>();
         tempDuplicateIndexForO2.addAll(duplicateIndexForO2);
+
         while(tempDuplicateIndexForO1.size()>0)
         {
             int randIndex1 = (int) (Math.random() * tempDuplicateIndexForO1.size());
@@ -435,46 +470,77 @@ public class is16060261 {
             }
 
             int IndexForSwapRecord = Index2;
-
+            int row = 0;
             if(!flag)
             {
-                Index1 = ordering.size() - swapRecord.size() + Index1-1;
+                row = 1;
+                Index1 = D - swapRecord.size() + Index1;
             }
-
+//
+//                        System.out.println("orderingofIndx1     "+ordering[row][Index1]);
+//                        System.out.println("swapRecordForO2     "+swapRecord.get(IndexForSwapRecord));
+//                        System.out.println("randNum     "+randNum);
             if(randNum==0)
             {
-                for(int i = 0; i < ordering.size()-1; i++)
+                for(int i = 0; i < 2; i++)
                 {
-                    if(ordering.get(i) == ordering.get(Index1))
+                    boolean found = false;
+                    for(int j = 0; j < D; j++)
                     {
-                        ordering.set(i,swapRecord.get(IndexForSwapRecord));
+                        if(ordering[i][j] == ordering[row][Index1])
+                        {
+                            ordering[i][j] = swapRecord.get(IndexForSwapRecord);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(found)
+                    {
                         break;
                     }
                 }
+
             }
 
             else if(randNum==1)
             {
-                for(int i = ordering.size()-2; i >= 0 ; i--)
+                for(int i = 1; i >= 0; i--)
                 {
-                    if(ordering.get(i) == ordering.get(Index1))
+                    boolean found = false;
+                    for(int j = D-1; j >= 0 ; j--)
                     {
-                        ordering.set(i,swapRecord.get(IndexForSwapRecord));
+                        if(ordering[i][j] == ordering[row][Index1])
+                        {
+                            ordering[i][j] = swapRecord.get(IndexForSwapRecord);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(found)
+                    {
                         break;
-
                     }
                 }
             }
-
             tempDuplicateIndexForO1.remove(randIndex1);
             tempDuplicateIndexForO2.remove(randIndex2);
         }
     }
-    private static void swapItem(ArrayList<Integer> ordering1, ArrayList<Integer> ordering2, int index)
+
+    private static void swapItem(int[][] ordering1, int[][] ordering2, int index, int D)
     {
-        int temp = ordering1.get(index);
-        ordering1.set(index,ordering2.get(index));
-        ordering2.set(index,temp);
+        if(index < D)
+        {
+            int temp = ordering1[0][index];
+            ordering1[0][index] = ordering2[0][index];
+            ordering2[0][index] = temp;
+        }
+        else
+        {
+            int temp = ordering1[1][index-D];
+            ordering1[1][index-D] = ordering2[1][index-D];
+            ordering2[1][index-D] = temp;
+        }
     }
 
 }
