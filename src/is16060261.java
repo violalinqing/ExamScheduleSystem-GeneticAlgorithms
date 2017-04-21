@@ -13,14 +13,14 @@ public class is16060261 {
     public static void main(String[] args) throws FileNotFoundException {
         int G, P, S, M, C, D, Cr, Mu, Re;
         Scanner in = new Scanner(System.in);
-        G = 150;//getNumberFromUser("number of generations:", 0, in);
-        P = 30;//getNumberFromUser("Population size:", 0, in);
-        S = 80;//getNumberFromUser("number of students:", 0, in);
-        M = 36;//getNumberFromUser("total number of modules:", 1, in);
-        C = 5;//getNumberFromUserAndCheck("the number of modules in a course:", in, M);
-        //int[] percentage = getPercentageAndCheck(in);
-        Re = 80;//percentage[0];
-        Mu = 10;//percentage[1];
+        G = getNumberFromUser("number of generations:", 0, in);
+        P = getNumberFromUser("Population size:", 0, in);
+        S = getNumberFromUser("number of students:", 0, in);
+        M = getNumberFromUser("total number of modules:", 1, in);
+        C = getNumberFromUserAndCheck("the number of modules in a course:", in, M);
+        int[] percentage = getPercentageAndCheck(in);
+        Re = percentage[0];
+        Mu = percentage[1];
         Cr = 100 - (Re + Mu);
         D = (M / 2);
 
@@ -211,6 +211,7 @@ public class is16060261 {
                 System.out.print("\t" + "m" + ordering[i][k]);
 
             }
+            if(i==0)
             System.out.println();
         }
 
@@ -287,37 +288,26 @@ public class is16060261 {
                 case REPRODUCTION:
 
                     int randForReprodction = (int) (Math.random() * orderings.size());
-//                     System.out.println("Reproduction Ordering:"+randForReprodction);
                     int[][] newOrdering1 = orderings.get(randForReprodction);
                     cost = fitnessFunction(studentScheduleMark,newOrdering1);
                     newOrdering1[1][examDays] = cost;
                     orderingAfterGA.add(newOrdering1);
-//                    printOrdering(i,newOrdering1,examDays);
-//                    System.out.println(cost);
                     orderings.remove(randForReprodction);
                     i++;
-//                     System.out.println();
                     break;
                 case MUTATION:
 
                     int randForMutation = (int) (Math.random() * orderings.size());
-//                    System.out.println("MUTATION Ordering:"+randForMutation );
                     int[][] newOrdering2 = performMutation(copyArrayList(orderings.get(randForMutation),examDays), examDays);
                     cost = fitnessFunction(studentScheduleMark,newOrdering2);
                     newOrdering2[1][examDays] = cost;
                     orderingAfterGA.add(newOrdering2);
-//                    printOrdering(i,newOrdering2,examDays);
-//                    System.out.println(cost);
-//                    System.out.println();
                     orderings.remove(randForMutation);
                     i++;
                     break;
                 case CROSSOVER:
                     if (orderings.size() >= 2) {
                         int[] randForCrossover = getRandomIndexOfOrderings(orderings.size());
-//                        printOrdering(i,orderings.get(randForCrossover[0]),examDays);
-//                        printOrdering(i,orderings.get(randForCrossover[1]),examDays);
-//                        System.out.println("CROSSOVER Ordering:"+randForCrossover[0]+" and "+randForCrossover[1]);
                         ArrayList<int[][]> AfterCrossover = performCrossover(orderings.get(randForCrossover[0]),orderings.get(randForCrossover[1]), examDays);
                         if(randForCrossover[1]>randForCrossover[0])
                         {
@@ -333,14 +323,10 @@ public class is16060261 {
                         cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(0));
                         AfterCrossover.get(0)[1][examDays] = cost;
                         orderingAfterGA.add(AfterCrossover.get(0));
-//                        printOrdering(i,AfterCrossover.get(0),examDays);
-//                                                System.out.println(cost);
                         i++;
                         cost = fitnessFunction(studentScheduleMark,AfterCrossover.get(1));
                         AfterCrossover.get(1)[1][examDays] = cost;
                         orderingAfterGA.add(AfterCrossover.get(1));
-//                        printOrdering(i,AfterCrossover.get(1),examDays);
-//                                               System.out.println(cost);
                         i++;
                     }
                     break;
@@ -379,7 +365,6 @@ public class is16060261 {
 
     private static int[][] performMutation(int[][] ordering, int examDays) {
         int[] rand = getRandomIndexOfOrderings(examDays);
-//        System.out.println(rand[0] + " to " + examDays + rand[1]);
         int temp = ordering[0][rand[0]];
         ordering[0][rand[0]] = ordering[1][rand[1]];
         ordering[1][rand[1]] = temp;
@@ -393,7 +378,6 @@ public class is16060261 {
         int NumberOfModule = D*2;
         boolean flag = false;
         int cp = (int) (Math.random() * ((NumberOfModule - 4) + 1)) + 2;
-//        System.out.println(cp+"!!!!!!!!!!!");
         if(cp <= D)
             flag = true;
 
@@ -415,8 +399,6 @@ public class is16060261 {
                 swapItem(ordering1,ordering2,i,D);
             }
         }
-//        System.out.println(swapRecordForO1);
-//        System.out.println(swapRecordForO2);
         repairDuplication(swapRecordForO1,swapRecordForO2,ordering1,ordering2,flag,D);
 
         AfterCrossover.add(ordering1);
@@ -439,8 +421,6 @@ public class is16060261 {
             if(!swapRecordForO1.contains(swapRecordForO2.get(i)))
                 duplicateIndexForO1.add(i);
         }
-//        System.out.println(duplicateIndexForO1);
-//        System.out.println(duplicateIndexForO2);
         repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering1, swapRecordForO1, flag,1,D );
         repairDuplicationForOneOrdering( duplicateIndexForO1, duplicateIndexForO2,ordering2, swapRecordForO2, flag,2,D );
     }
@@ -471,15 +451,13 @@ public class is16060261 {
 
             int IndexForSwapRecord = Index2;
             int row = 0;
+
             if(!flag)
             {
                 row = 1;
                 Index1 = D - swapRecord.size() + Index1;
             }
-//
-//                        System.out.println("orderingofIndx1     "+ordering[row][Index1]);
-//                        System.out.println("swapRecordForO2     "+swapRecord.get(IndexForSwapRecord));
-//                        System.out.println("randNum     "+randNum);
+
             if(randNum==0)
             {
                 for(int i = 0; i < 2; i++)
